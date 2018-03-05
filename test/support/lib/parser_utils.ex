@@ -27,6 +27,19 @@ defmodule ParserUtils do
     |> Code.compile_string
   end
 
+  def compile_modules_to_dir(file_group, output_dir) do
+    files = file_group
+    |> Thrift.Generator.generate!(output_dir)
+    |> Enum.map(&Path.join(output_dir, &1))
+
+    # Kernel.ParallelCompiler.compile only available with Elixir >= 1.6
+    if function_exported?(Kernel.ParallelCompiler, :compile, 2) do
+      apply(Kernel.ParallelCompiler, :compile, [files])
+    else
+      apply(Kernel.ParallelCompiler, :files, [files])
+    end
+  end
+
   # Debugging aid. Non-private in order to mute "function is unused" warning.
   def print_compiled_code(code_string) do
     code_string

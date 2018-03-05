@@ -20,8 +20,23 @@ sudo: required
 dist: trusty
 services: docker
 
+python:
+  - "3.6"
+virtualenv:
+  system_site_packages: true
+addons:
+  apt:
+    packages:
+      - "python3-pip"
+
 env:
   - COVERALLS=false
+
+install:
+  - pip3 install --user thrift==0.10.0
+  - mix local.hex --force
+  - mix local.rebar --force
+  - mix deps.get
 
 script:
   - MIX_ENV=test mix deps.compile

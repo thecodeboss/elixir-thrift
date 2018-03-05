@@ -3,6 +3,8 @@ ExUnit.start()
 
 defmodule ThriftTestHelpers do
 
+  @project_root Path.expand("../", __DIR__)
+
   defmacro __using__(_) do
     quote do
       require ThriftTestHelpers
@@ -36,6 +38,27 @@ defmodule ThriftTestHelpers do
   def parse(file_path) do
     alias Thrift.Parser
     Parser.parse_file(file_path)
+  end
+
+  def python(args, python_path) do
+    python_path = '#{python_path}:#{System.get_env("PYTHONPATH")}'
+    python = System.find_executable("python3")
+    Port.open({:spawn_executable, python}, [
+      :binary,
+      {:args, args},
+      {:env, [{'PYTHONPATH', python_path}]}
+    ])
+  end
+
+  def generate_thrift_files(language, thrift_file, output_dir) do
+    File.mkdir_p!(output_dir)
+    thrift_file = Path.relative_to(thrift_file, @project_root)
+    output_dir = Path.relative_to(output_dir, @project_root)
+
+    {_, 0} = System.cmd(System.get_env("THRIFT") || "thrift",
+                        ["-out", output_dir,
+                        "--gen", language, "-r", thrift_file],
+                        cd: @project_root)
   end
 
   @spec with_thrift_files(Keyword.t, String.t) :: nil
